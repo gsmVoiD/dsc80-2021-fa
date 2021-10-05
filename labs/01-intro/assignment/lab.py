@@ -58,7 +58,7 @@ def median_vs_average(nums):
     >>> median_vs_average([1, 2, 3, 4])
     True
     '''
-    ...
+    return np.median(nums) >= np.mean(nums)
 
 
 # ---------------------------------------------------------------------
@@ -80,7 +80,14 @@ def same_diff_ints(ints):
     >>> same_diff_ints([1,3,5,7,9])
     False
     """
-    ...
+    a = 1
+    for i in range(len(ints)):
+        while (i + a) < len(ints):
+            if (a - i) == (ints[a] - ints[i]):
+                return True
+            a += 1
+    return False
+
 
 
 # ---------------------------------------------------------------------
@@ -105,7 +112,12 @@ def n_prefixes(s, n):
     >>> n_prefixes('aaron', 2)
     'aaa'
     """
-    ...
+    new_str = ""
+    while n > 0:
+        for i in range(0, n):
+            new_str += s[i]
+        n -= 1
+    return new_str
 
 
 # ---------------------------------------------------------------------
@@ -129,7 +141,27 @@ def exploded_numbers(ints, n):
     >>> exploded_numbers([3, 8, 15], 2)
     ['01 02 03 04 05', '06 07 08 09 10', '13 14 15 16 17']
     """
-    ...
+    exploded = []
+    a = 0
+    max_len = len(str(max(ints)))
+    while a < len(ints):
+        str_explode = ""
+        lowest = ints[a] - n
+        highest = ints[a] + n
+        x = lowest
+        while x <= highest:
+            str_x = str(x)
+            zeroes = ""
+            while (len(str_x) + len(zeroes)) < max_len:
+                zeroes += "0"
+            str_x = zeroes + str_x
+            str_explode += str_x + " "
+            x += 1
+        str_explode = str_explode[:-1]
+        exploded.append(str_explode)
+        a += 1
+    return exploded
+
 
 
 # ---------------------------------------------------------------------
@@ -143,12 +175,16 @@ def last_chars(fh):
     string consisting of the last character of the line.
     :param fh: a file object to read from.
     :returns: a string of last characters from fh
-    :Example:
+    :Example:X
     >>> fp = os.path.join('data', 'chars.txt')
     >>> last_chars(open(fp))
     'hrg'
     """
-    ...
+    ret_str = ""
+    with open(fh.name, "r") as f:
+        for line in f:
+            ret_str += line[-2]
+    return ret_str
 
 
 # ---------------------------------------------------------------------
@@ -171,7 +207,11 @@ def arr_1(A):
     >>> np.all(out >= A)
     True
     """
-    ...
+    B = np.array([])
+    for i in range(len(A)):
+        B = np.append(B, A[i] + i **(1/2))
+    return B
+        
 
 def arr_2(A):
     """
@@ -189,6 +229,14 @@ def arr_2(A):
     True
     """
     ...
+    B = np.array([])
+    for item in A:
+        root = np.sqrt(item)
+        if int(root + 0.5) ** 2 == item:
+            B = np.append(B, True)
+        else:
+            B = np.append(B, False)
+    return B
 
 def arr_3(A):
     """
@@ -208,7 +256,10 @@ def arr_3(A):
     >>> out.max() == 0.03
     True
     """
-    ...
+    B = np.array([])
+    for i in range(len(A) - 1):
+        B = np.append(B, round((A[i+1] - A[i]) / A[i], 2))
+    return B
 
 def arr_4(A):
     """
@@ -227,7 +278,14 @@ def arr_4(A):
     >>> out == 1
     True
     """
-    ...
+    leftover = 0
+    for i in range(len(A)):
+        stock = A[i]
+        if leftover > stock:
+            return i
+        else:
+            leftover += 20 - stock
+        
 
 
 # ---------------------------------------------------------------------
@@ -249,10 +307,34 @@ def salary_stats(salary):
     >>> 'total_highest' in out.index
     True
     >>> isinstance(out.loc['duplicates'], bool)
-    True
-    """
-    ...
 
+    """
+    stats_series = pd.Series()
+    stats_series["num_players"] = salary.shape[0]
+    stats_series["num_teams"] = salary.get("Team").nunique()
+    stats_series["total_salary"] = sum(salary.get("Salary"))
+    stats_series["highest_salary"] = salary.get("Salary").max()
+    stats_series["avg_bos"] = round(salary[salary.get("Team") == "BOS"].get("Salary").mean(), 2)
+    stats_series["third_lowest"] = (salary.sort_values("Salary").get("Player").iloc[2], salary.sort_values("Salary").get("Team").iloc[2] )
+    last_names = []
+    for name in salary.get("Player"):
+        first_last = name.split(" ")
+        last_names.append(first_last[1])
+    last_counts = {}
+    for name in last_names:
+        if name in last_counts.keys():
+            last_counts[name] += 1
+        else:
+            last_counts[name] = 1
+    for value in last_counts.values():
+        if value != 0:
+            stats_series["duplicates"] = True
+            break
+    else:
+        stats_series["duplicates"] = False
+    highest_paid = salary.sort_values("Salary").get("Team").iloc[-1]
+    stats_series["total_highest"] = salary[salary.get("Team") == highest_paid].get("Salary").sum()
+    return stats_series
 
 # ---------------------------------------------------------------------
 # QUESTION 8
@@ -286,4 +368,35 @@ def parse_malformed(fp):
     >>> (dg == df.iloc[9:13]).all().all()
     True
     """
-    ...
+    formed = pd.DataFrame()
+    i = 0
+    cols = []
+    with open(fp, "r") as f:
+        for line in f:
+            if line[-1] != '"':
+                line = line[:-1]
+            line = line.replace("\n","").replace(",,",",")
+            items = line.split(",")
+            if len(items) > 6:
+                items = items[0:-1]
+            if i == 0:
+                for item in items:
+                    formed[item] = 0
+                cols = items
+            else:
+                geo = str(items[-2:])[1:-1]
+                items = items[0:-2]
+                geo = geo.replace('"',"").replace("'","").replace(" ","")
+                items2 = []
+                for item in items:
+                    item = item.replace('"', "").replace("'","")
+                    items2.append(item)
+                items = items2
+                items.append(geo)
+                df_add = pd.DataFrame(items, index = cols)
+                df_add = df_add.transpose()
+                formed = formed.append(df_add)
+            i += 1
+    formed = formed.reset_index().drop(columns = ["index"])
+    formed = formed.astype({"first":str, "last":str, "weight":float, "height":float, "geo":str})
+    return formed
